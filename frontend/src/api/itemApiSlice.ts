@@ -6,7 +6,13 @@ export const itemApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getAllItems: builder.query<IItem[], void>({
       query: () => `${ITEMS_URL}`,
-      providesTags: ["Item"],
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ _id }) => ({ type: "Item" as const, _id })),
+              { type: "Item", id: "LIST" },
+            ]
+          : [{ type: "Item", id: "LIST" }],
       keepUnusedDataFor: 30,
     }),
     getItemById: builder.query<IItem, string>({
