@@ -7,11 +7,14 @@ export const itemApi = apiSlice.injectEndpoints({
     getAllItems: builder.query<IItem[], void>({
       query: () => `${ITEMS_URL}`,
       providesTags: ["Item"],
+      keepUnusedDataFor: 30,
     }),
     getItemById: builder.query<IItem, string>({
       query: (id) => `${ITEMS_URL}/${id}`,
       providesTags: (_result, _error, id) => [{ type: "Item", id }],
+      keepUnusedDataFor: 30,
     }),
+
     createItem: builder.mutation<IItem, IItem>({
       query: (item) => ({
         url: `${ITEMS_URL}`,
@@ -26,14 +29,14 @@ export const itemApi = apiSlice.injectEndpoints({
         method: "PUT",
         body: item,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: "Item", id }],
+      invalidatesTags: ["Item"],
     }),
     deleteItem: builder.mutation<void, string>({
       query: (id) => ({
         url: `${ITEMS_URL}/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: (_result, _error, id) => [{ type: "Item", id }],
+      invalidatesTags: ["Item"],
     }),
   }),
 });
