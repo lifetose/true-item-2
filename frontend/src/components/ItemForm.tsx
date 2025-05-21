@@ -6,6 +6,7 @@ import {
   useUpdateItemMutation,
 } from "@/api/itemApiSlice";
 import { IItem } from "@/types/Item";
+import { getErrorMessage } from "@/api/apiSlice";
 
 export const ItemForm = () => {
   const navigate = useNavigate();
@@ -18,8 +19,10 @@ export const ItemForm = () => {
     skip: !id,
   });
 
-  const [createItem, { isLoading: isCreating }] = useCreateItemMutation();
-  const [updateItem, { isLoading: isUpdating }] = useUpdateItemMutation();
+  const [createItem, { isLoading: isCreating, error: createError }] =
+    useCreateItemMutation();
+  const [updateItem, { isLoading: isUpdating, error: updateError }] =
+    useUpdateItemMutation();
 
   useEffect(() => {
     if (fetchedItem) {
@@ -53,6 +56,16 @@ export const ItemForm = () => {
   return (
     <form onSubmit={handleSubmit} className='space-y-4'>
       <h1 className='text-xl font-bold'>{isEdit ? "Edit" : "Create"} Item</h1>
+      {createError && (
+        <div className='text-red-500'>
+          Error: {getErrorMessage(createError)}
+        </div>
+      )}
+      {updateError && (
+        <div className='text-red-500'>
+          Error: {getErrorMessage(updateError)}
+        </div>
+      )}
       <div>
         <label htmlFor='name'>Name</label>
         <input
