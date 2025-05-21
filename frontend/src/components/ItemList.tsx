@@ -36,6 +36,12 @@ export const ItemList = () => {
             <h2 className='font-semibold'>{item.name}</h2>
             <div className='mt-2 space-x-2'>
               <Link
+                to={`/items/${item._id}`}
+                className='text-blue-500 underline'
+              >
+                View
+              </Link>
+              <Link
                 to={`/edit/${item._id}`}
                 className='text-blue-500 underline'
               >
