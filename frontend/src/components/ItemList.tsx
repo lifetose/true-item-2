@@ -1,24 +1,28 @@
-import { useEffect, useState } from "react";
-import { itemApi } from "../api/itemApi";
-import type { Item } from "../api/itemApi";
 import { Link } from "react-router-dom";
+import { useDeleteItemMutation, useGetAllItemsQuery } from "@/api/itemApiSlice";
+import { getErrorMessage } from "@/api/apiSlice";
 
 export const ItemList = () => {
-  const [items, setItems] = useState<Item[]>([]);
+  const { data: items, isLoading, error, refetch } = useGetAllItemsQuery();
+  const [deleteItem] = useDeleteItemMutation();
 
-  const fetchItems = async () => {
-    const { data } = await itemApi.getAll();
-    setItems(data);
+  const handleDeleteItem = async (itemId: string) => {
+    if (!itemId) return;
+    try {
+      await deleteItem(itemId).unwrap();
+      refetch();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const deleteItem = async (id: string) => {
-    await itemApi.delete(id);
-    fetchItems();
-  };
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-  useEffect(() => {
-    fetchItems();
-  }, []);
+  if (error) {
+    return <div>Error: {getErrorMessage(error)}</div>;
+  }
 
   return (
     <div>
@@ -27,7 +31,7 @@ export const ItemList = () => {
         Create New Item
       </Link>
       <ul className='mt-4'>
-        {items.map((item) => (
+        {items?.map((item) => (
           <li key={item._id} className='border p-2 my-2 rounded'>
             <h2 className='font-semibold'>{item.name}</h2>
             <div className='mt-2 space-x-2'>
@@ -38,7 +42,7 @@ export const ItemList = () => {
                 Edit
               </Link>
               <button
-                onClick={() => deleteItem(item._id!)}
+                onClick={() => handleDeleteItem(item._id!)}
                 className='text-red-500'
               >
                 Delete

@@ -1,50 +1,79 @@
 import { useState, useEffect } from "react";
-import { itemApi } from "../api/itemApi";
-import type { Item } from "../api/itemApi";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  useGetItemByIdQuery,
+  useCreateItemMutation,
+  useUpdateItemMutation,
+} from "@/api/itemApiSlice";
+import { IItem } from "@/types/Item";
 
 export const ItemForm = () => {
-  const [item, setItem] = useState<Item>({ name: "" });
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+
+  const isEdit = Boolean(id);
+  const [item, setItem] = useState<IItem>({ name: "" });
+
+  const { data: fetchedItem, isLoading } = useGetItemByIdQuery(id!, {
+    skip: !id,
+  });
+
+  const [createItem, { isLoading: isCreating }] = useCreateItemMutation();
+  const [updateItem, { isLoading: isUpdating }] = useUpdateItemMutation();
 
   useEffect(() => {
-    if (id) {
-      const fetchItem = async () => {
-        try {
-          const { data } = await itemApi.getById(id);
-          setItem({ name: data.name });
-        } catch (error) {
-          console.error("Error fetching item:", error);
-        }
-      };
-      fetchItem();
+    if (fetchedItem) {
+      setItem({ name: fetchedItem.name });
     }
-  }, [id]);
+  }, [fetchedItem]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setItem({ ...item, name: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (id) {
-      await itemApi.update(id, item);
-    } else {
-      await itemApi.create(item);
+
+    try {
+      if (id && isEdit) {
+        await updateItem({ id, item }).unwrap();
+      } else {
+        await createItem(item).unwrap();
+      }
+      navigate("/");
+    } catch (err) {
+      console.error("Failed to save item:", err);
     }
-    navigate("/");
   };
+
+  if (isEdit && isLoading) {
+    return <div>Loading item...</div>;
+  }
 
   return (
     <form onSubmit={handleSubmit} className='space-y-4'>
-      <h1 className='text-xl font-bold'>{id ? "Edit" : "Create"} Item</h1>
+      <h1 className='text-xl font-bold'>{isEdit ? "Edit" : "Create"} Item</h1>
       <div>
-        <label>Name</label>
+        <label htmlFor='name'>Name</label>
         <input
+          id='name'
           className='border rounded p-2 w-full'
           value={item.name}
-          onChange={(e) => setItem({ ...item, name: e.target.value })}
+          onChange={handleChange}
         />
       </div>
-      <button className='bg-green-500 text-white px-4 py-2 rounded'>
-        Save
+      <button
+        type='submit'
+        className='bg-green-500 text-white px-4 py-2 rounded'
+        disabled={isCreating || isUpdating}
+      >
+        {isEdit
+          ? isUpdating
+            ? "Updating..."
+            : "Update"
+          : isCreating
+            ? "Creating..."
+            : "Create"}
       </button>
     </form>
   );
